@@ -48,50 +48,10 @@
             </tr>
             </thead>
             <tbody>
-            <tr>
-                <td>1</td>
-                <td>2</td>
-                <td>3</td>
-                <td>4</td>
-                <td>5</td>
-                <td>6</td>
-                <td>7</td>
-            </tr>
-            <tr>
-                <td>1</td>
-                <td>2</td>
-                <td>3</td>
-                <td>4</td>
-                <td>5</td>
-                <td>6</td>
-                <td>7</td>
-            </tr>
-            <tr>
-                <td>1</td>
-                <td>2</td>
-                <td>3</td>
-                <td>4</td>
-                <td>5</td>
-                <td>6</td>
-                <td>7</td>
-            </tr>
-            <tr>
-                <td>1</td>
-                <td>2</td>
-                <td>3</td>
-                <td>4</td>
-                <td>5</td>
-                <td>6</td>
-                <td>7</td>
-            </tr>
-            <tr>
-                <td>1</td>
-                <td>2</td>
-                <td>3</td>
-                <td>4</td>
-                <td>5</td>
-                <td>6</td>
-                <td>7</td>
+            <tr v-for="week in (Math.ceil(dayArr.length/7))">
+                <td v-for="item in theWeek(week)">
+                    {{item.days}}
+                </td>
             </tr>
             </tbody>
         </table>
@@ -107,7 +67,8 @@
             return {
                 dayNameArr: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'],
                 year: 2017,
-                month: 6
+                month: 7,
+                dayArr: []
             }
         },
         mounted(){
@@ -120,20 +81,45 @@
             let theMonthDays = new Date(new Date(y, m, 1) - 1).getDate(); //日期对象-常数得到一个时间戳再newDate
             let preMounthDays = new Date(new Date(this.year, this.month - 1, 1) - 1).getDate(); //上月最后一天日期
             //这个月第一天是星期几就放入上个月几个尾巴（比如这个月第一天是星期四，就要显示上个月4天）周日不放
-            while (theMonthFirstDay--) {
-                dayArr.unshift(preMounthDays--);
+            while (theMonthFirstDay-- > 0) {
+                dayArr.unshift({
+                    'days': preMounthDays--,
+                    'preMonth': true
+                });
             }
             //把这个月的日期push进数组
             let count = 1; //本月1号
-            while (theMonthDays--) {
-                dayArr.push(count++);
+            while (theMonthDays-- > 0) {
+                dayArr.push({
+                    'days': count++
+                });
             }
-            //补足35天（5排*7天）上月尾巴+本月+下月头 = 35
+            //补足35（5排*7天）上月尾巴+本月+下月头 = 35 ,发现有bug，7月要6排
+            console.log(dayArr.length, dayArr);
+            let c = 35 - dayArr.length;
             count = 1;
-            while (dayArr.length !== 35) {
-                dayArr.push(count++)
+            if (c > 0) {
+                while (c-- > 0) {
+                    dayArr.push({
+                        'days': count++,
+                        'nextMonth': true
+                    })
+                }
+            } else {
+                while (dayArr.length !== 42) {
+                    dayArr.push({
+                        'days': count++,
+                        'nextMonth': true
+                    })
+                }
             }
-            console.log(dayArr, count)
+            this.dayArr = dayArr;
+        },
+        methods: {
+            //返回第几周的日期序列，每7个算一周共5周,序号从1开始
+            theWeek(week){
+                return this.dayArr.slice((week - 1) * 7, week * 7);
+            }
         }
     });
 
