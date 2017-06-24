@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>日历原理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .calender {
+            width: 1000px;
+            height: 530px;
+            margin: 100px auto;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        table.bgTable thead tr th {
+            height: 30px;
+            line-height: 30px;
+        }
+
+        table.bgTable tbody tr td {
+            height: 100px;
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+            border: 1px solid #333;
+            text-align: right;
+            padding: 5px;
+            vertical-align: top;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calender" id="calender">
+    <div class="tableBox1">
+        <table class="bgTable">
+            <thead>
+            <tr>
+                <th v-for="item in dayNameArr">{{item}}</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>1</td>
+                <td>2</td>
+                <td>3</td>
+                <td>4</td>
+                <td>5</td>
+                <td>6</td>
+                <td>7</td>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>2</td>
+                <td>3</td>
+                <td>4</td>
+                <td>5</td>
+                <td>6</td>
+                <td>7</td>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>2</td>
+                <td>3</td>
+                <td>4</td>
+                <td>5</td>
+                <td>6</td>
+                <td>7</td>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>2</td>
+                <td>3</td>
+                <td>4</td>
+                <td>5</td>
+                <td>6</td>
+                <td>7</td>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>2</td>
+                <td>3</td>
+                <td>4</td>
+                <td>5</td>
+                <td>6</td>
+                <td>7</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="./vue.js"></script>
+<script>
+
+    new Vue({
+        el: '#calender',
+        data(){
+            return {
+                dayNameArr: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'],
+                year: 2017,
+                month: 6
+            }
+        },
+        mounted(){
+            let dayArr = [];
+            //获取这个月的第一天是星期几，js需要月份-1
+            let theMonthFirstDay = new Date(this.year, this.month - 1, 1).getDay();
+            //本月有多少天。算法：这个月的最后一天就是下个月的第一天-1ms,还需要考虑月份为12的时候年份+1
+            let y = this.month === 12 ? this.year + 1 : this.year; //下月所在的年份
+            let m = this.month === 12 ? 1 : this.month;  //如果是12月，下月就是1月
+            let theMonthDays = new Date(new Date(y, m, 1) - 1).getDate(); //日期对象-常数得到一个时间戳再newDate
+            let preMounthDays = new Date(new Date(this.year, this.month - 1, 1) - 1).getDate(); //上月最后一天日期
+            //这个月第一天是星期几就放入上个月几个尾巴（比如这个月第一天是星期四，就要显示上个月4天）周日不放
+            while (theMonthFirstDay--) {
+                dayArr.unshift(preMounthDays--);
+            }
+            //把这个月的日期push进数组
+            let count = 1; //本月1号
+            while (theMonthDays--) {
+                dayArr.push(count++);
+            }
+            //补足35天（5排*7天）上月尾巴+本月+下月头 = 35
+            count = 1;
+            while (dayArr.length !== 35) {
+                dayArr.push(count++)
+            }
+            console.log(dayArr, count)
+        }
+    });
+
+</script>
+</body>
+</html>
