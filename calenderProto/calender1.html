@@ -11,8 +11,44 @@
 
         .calender {
             width: 1000px;
-            height: 530px;
             margin: 100px auto;
+        }
+
+        .form {
+            text-align: center;
+            margin: 30px auto;
+            overflow: hidden;
+            height: 45px;
+            line-height: 45px;
+        }
+
+        .form .input {
+            width: 33.333%;
+            float: left;
+        }
+
+        .form .input input {
+            width: 40px;
+        }
+
+        .form .btn {
+            width: 33.333%;
+            float: left;
+        }
+
+        .form .btn button {
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            background-color: #fff;
+            color: #000;
+            border: 1px solid #000000;
+            outline: none;
+        }
+
+        .form .date {
+            width: 33.333%;
+            float: left;
         }
 
         table {
@@ -35,11 +71,28 @@
             padding: 5px;
             vertical-align: top;
         }
+
+        table.bgTable tbody tr td.gray {
+            background-color: #eeeeee;
+        }
     </style>
 </head>
 <body>
 
 <div class="calender" id="calender">
+    <div class="form">
+        <div class="input">
+            <input type="text" v-model="year" onfocus="this.select()">年
+            <input type="text" v-model="month" onfocus="this.select()" @keyup="testMonth">月
+        </div>
+        <div class="date">
+            <h2>{{year}}年{{month}}月</h2>
+        </div>
+        <div class="btn">
+            <button @click="decrement">&lt;</button>
+            <button @click="increment">&gt;</button>
+        </div>
+    </div>
     <div class="tableBox1">
         <table class="bgTable">
             <thead>
@@ -49,7 +102,7 @@
             </thead>
             <tbody>
             <tr v-for="week in (Math.ceil(dayArr.length/7))">
-                <td v-for="item in theWeek(week)">
+                <td v-for="item in theWeek(week)" :class="{'gray':item.prevMonth || item.nextMonth}">
                     {{item.days}}
                 </td>
             </tr>
@@ -66,60 +119,83 @@
         data(){
             return {
                 dayNameArr: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'],
-                year: 2017,
-                month: 7,
-                dayArr: []
+                year: new Date().getFullYear(),
+                month: new Date().getMonth() + 1
             }
-        },
-        mounted(){
-            let dayArr = [];
-            //获取这个月的第一天是星期几，js需要月份-1
-            let theMonthFirstDay = new Date(this.year, this.month - 1, 1).getDay();
-            //本月有多少天。算法：这个月的最后一天就是下个月的第一天-1ms,还需要考虑月份为12的时候年份+1
-            let y = this.month === 12 ? this.year + 1 : this.year; //下月所在的年份
-            let m = this.month === 12 ? 1 : this.month;  //如果是12月，下月就是1月
-            let theMonthDays = new Date(new Date(y, m, 1) - 1).getDate(); //日期对象-常数得到一个时间戳再newDate
-            let preMounthDays = new Date(new Date(this.year, this.month - 1, 1) - 1).getDate(); //上月最后一天日期
-            //这个月第一天是星期几就放入上个月几个尾巴（比如这个月第一天是星期四，就要显示上个月4天）周日不放
-            while (theMonthFirstDay-- > 0) {
-                dayArr.unshift({
-                    'days': preMounthDays--,
-                    'preMonth': true
-                });
-            }
-            //把这个月的日期push进数组
-            let count = 1; //本月1号
-            while (theMonthDays-- > 0) {
-                dayArr.push({
-                    'days': count++
-                });
-            }
-            //补足35（5排*7天）上月尾巴+本月+下月头 = 35 ,发现有bug，7月要6排
-            console.log(dayArr.length, dayArr);
-            let c = 35 - dayArr.length;
-            count = 1;
-            if (c > 0) {
-                while (c-- > 0) {
-                    dayArr.push({
-                        'days': count++,
-                        'nextMonth': true
-                    })
-                }
-            } else {
-                while (dayArr.length !== 42) {
-                    dayArr.push({
-                        'days': count++,
-                        'nextMonth': true
-                    })
-                }
-            }
-            this.dayArr = dayArr;
         },
         methods: {
             //返回第几周的日期序列，每7个算一周共5周,序号从1开始
             theWeek(week){
                 return this.dayArr.slice((week - 1) * 7, week * 7);
+            },
+            increment(){
+                if (this.month >= 12) {
+                    this.month = 1;
+                    this.year++;
+                } else {
+                    this.month++;
+                }
+            },
+            decrement(){
+                if (this.month <= 1) {
+                    this.month = 12;
+                    this.year--;
+                } else {
+                    this.month--;
+                }
+            },
+            testMonth(){
+                //延迟判断
+                setTimeout(() => {
+                    if (!this.month || this.month < 1 || this.month > 12) {
+                        this.month = new Date().getMonth() + 1;
+                    }
+                }, 800)
             }
+        },
+        computed: {
+            dayArr(){
+                let dayArr = [];
+                //获取这个月的第一天是星期几，js需要月份-1
+                let theMonthFirstDay = new Date(this.year, this.month - 1, 1).getDay();
+                //本月有多少天。算法：这个月的最后一天就是下个月的第一天-1ms,还需要考虑月份为12的时候年份+1
+                let y = this.month === 12 ? this.year + 1 : this.year; //下月所在的年份
+                let m = this.month === 12 ? 1 : this.month;  //如果是12月，下月就是1月
+                let theMonthDays = new Date(new Date(y, m, 1) - 1).getDate(); //日期对象-常数得到一个时间戳再newDate
+                let preMounthDays = new Date(new Date(this.year, this.month - 1, 1) - 1).getDate(); //上月最后一天日期
+                //这个月第一天是星期几就放入上个月几个尾巴（比如这个月第一天是星期四，就要显示上个月4天）周日不放
+                while (theMonthFirstDay-- > 0) {
+                    dayArr.unshift({
+                        'days': preMounthDays--,
+                        'prevMonth': true
+                    });
+                }
+                //把这个月的日期push进数组
+                let count = 1; //本月1号
+                while (theMonthDays-- > 0) {
+                    dayArr.push({
+                        'days': count++
+                    });
+                }
+                //补足35（5排*7天）上月尾巴+本月+下月头 = 35 ,发现有bug，比如2017.7月要6排
+                count = 1;
+                if (dayArr.length <= 35) {
+                    while (dayArr.length !== 35) {
+                        dayArr.push({
+                            'days': count++,
+                            'nextMonth': true
+                        })
+                    }
+                } else {
+                    while (dayArr.length !== 42) {  //6排的情况
+                        dayArr.push({
+                            'days': count++,
+                            'nextMonth': true
+                        })
+                    }
+                }
+                return dayArr
+            },
         }
     });
 
