@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>日历原理2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .calendar {
+            width: 1000px;
+            margin: 100px auto;
+            position: relative;
+        }
+
+        .form {
+            text-align: center;
+            margin: 30px auto;
+            overflow: hidden;
+            height: 45px;
+            line-height: 45px;
+        }
+
+        .form .input {
+            width: 33.333%;
+            float: left;
+        }
+
+        .form .input input {
+            width: 40px;
+        }
+
+        .form .btn {
+            width: 33.333%;
+            float: left;
+        }
+
+        .form .btn button {
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            background-color: #fff;
+            color: #000;
+            border: 1px solid #000000;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .form .date {
+            width: 33.333%;
+            float: left;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        table.bgTable thead tr th {
+            height: 30px;
+            line-height: 30px;
+        }
+
+        table.bgTable tbody tr td {
+            height: 100px;
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+            border: 1px solid #333;
+            text-align: right;
+            padding: 5px;
+            vertical-align: top;
+        }
+
+        table.bgTable tbody tr td.gray {
+            background-color: #eeeeee;
+        }
+
+        .tableBox2 {
+            position: absolute;
+            top: 105px;
+            left: 0;
+            width: 100%;
+            height: 600px;
+        }
+
+        .tableBox2 .row {
+            height: 100px;
+            border-top: 1px solid transparent;
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+
+        .tableBox2 .row .scheduleTable {
+            height: 70px;
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        .tableBox2 .row .scheduleTable tr {
+            height: 20px;
+            width: 100%;
+        }
+
+        .tableBox2 .row .scheduleTable tr td {
+            width: 14.2%;
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+            padding: 0 2px;
+        }
+
+        .tableBox2 .row .scheduleTable tr .schedule {
+            border-radius: 15px;
+            height: 22px;
+            line-height: 22px;
+            font-size: 14px;
+            padding: 0 10px;
+        }
+
+        .tableBox2 .row .scheduleTable tr .schedule {
+            background-color: yellowgreen;
+        }
+
+
+    </style>
+</head>
+<body>
+
+<div class="calendar" id="calendar">
+    <div class="form">
+        <div class="input">
+            <input type="text" v-model="year" onfocus="this.select()">年
+            <input type="text" v-model="month" onfocus="this.select()" @keyup="testMonth">月
+        </div>
+        <div class="date">
+            <h2>{{year}}年{{month}}月</h2>
+        </div>
+        <div class="btn">
+            <button @click="decrement">&lt;</button>
+            <button @click="increment">&gt;</button>
+        </div>
+    </div>
+    <div class="tableBox1">
+        <table class="bgTable">
+            <thead>
+            <tr>
+                <th v-for="item in dayNameArr">{{item}}</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="week in (Math.ceil(dayArr.length/7))">
+                <td v-for="item in theWeek(week)" :class="{'gray':item.prevMonth || item.nextMonth}">
+                    {{item.days}}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="tableBox2">
+        <div class="row" v-for="item in domData">
+            <table class="scheduleTable">
+                <tr v-for="line in item">
+                    <td v-for="td in line" :colspan="td.colspan">
+                        <div v-if="td.title" :class="{'schedule':td.type}">{{td.title}}</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="./vue.js"></script>
+<script>
+
+    new Vue({
+        el: '#calendar',
+        data(){
+            return {
+                dayNameArr: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'],
+                year: new Date().getFullYear(),  //获取当前年份
+                month: new Date().getMonth() + 1,  //获取当前月份
+                domData: [
+                    [
+                        [{
+                            'title': '打球',
+                            'colspan': 3,
+                            'type': 'life'
+                        }, {}, {}, {}, {}],
+                        [{}, {}, {}, {}, {}, {}, {}],
+                        [{}, {}, {}, {}, {}, {}, {}]
+                    ],
+                    [
+                        [{}, {}, {}, {}, {
+                            'title': '开会',
+                            'colspan': 2,
+                            'type': 'life'
+                        }, {}],
+                        [{}, {}, {}, {}, {}, {}, {}],
+                        [{}, {}, {}, {}, {}, {}, {}]
+                    ],
+                    [
+                        [{}, {}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}, {}]
+                    ],
+                    [
+                        [{}, {}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}, {}]
+                    ],
+                    [
+                        [{}, {}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}, {}]
+                    ],
+                    [
+                        [{}, {}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}, {}]
+                    ],
+                ],
+            }
+        },
+        methods: {
+            //返回第几周的日期序列，每7个算一周共5周,序号从1开始
+            theWeek(week){
+                return this.dayArr.slice((week - 1) * 7, week * 7);
+            },
+            increment(){
+                if (this.month >= 12) {
+                    this.month = 1;
+                    this.year++;
+                } else {
+                    this.month++;
+                }
+            },
+            decrement(){
+                if (this.month <= 1) {
+                    this.month = 12;
+                    this.year--;
+                } else {
+                    this.month--;
+                }
+            },
+            testMonth(){
+                //延迟判断
+                setTimeout(() => {
+                    if (!this.month || this.month < 1 || this.month > 12) {
+                        this.month = new Date().getMonth() + 1;
+                    }
+                }, 800)
+            }
+        },
+        computed: {
+            dayArr(){
+                let dayArr = [];
+                //获取这个月的第一天是星期几，js需要月份-1
+                let theMonthFirstDay = new Date(this.year, this.month - 1, 1).getDay();
+                //本月有多少天。算法：这个月的最后一天就是下个月的第一天-1ms,还需要考虑月份为12的时候年份+1
+                let y = this.month === 12 ? this.year + 1 : this.year; //下月所在的年份
+                let m = this.month === 12 ? 1 : this.month;  //如果是12月，下月就是1月
+                let theMonthDays = new Date(new Date(y, m, 1) - 1).getDate(); //日期对象-常数得到一个时间戳再newDate
+                let preMounthDays = new Date(new Date(this.year, this.month - 1, 1) - 1).getDate(); //上月最后一天日期
+                //这个月第一天是星期几就放入上个月几个尾巴（比如这个月第一天是星期四，就要显示上个月4天）周日不放
+                while (theMonthFirstDay-- > 0) {
+                    dayArr.unshift({
+                        'days': preMounthDays--,
+                        'prevMonth': true
+                    });
+                }
+                //把这个月的日期push进数组
+                let count = 1; //本月1号
+                while (theMonthDays-- > 0) {
+                    dayArr.push({
+                        'days': count++
+                    });
+                }
+                //补足35（5排*7天）上月尾巴+本月+下月头 = 35 ,发现有bug，比如2017.7月要6排
+                count = 1;
+                if (dayArr.length <= 35) {
+                    while (dayArr.length !== 35) {
+                        dayArr.push({
+                            'days': count++,
+                            'nextMonth': true
+                        })
+                    }
+                } else {
+                    while (dayArr.length !== 42) {  //6排的情况
+                        dayArr.push({
+                            'days': count++,
+                            'nextMonth': true
+                        })
+                    }
+                }
+                return dayArr
+            },
+        }
+    });
+
+</script>
+</body>
+</html>
