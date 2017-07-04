@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>日历原理2</title>
+    <title>日历原理3</title>
     <style>
         * {
             margin: 0;
@@ -122,7 +122,15 @@
         }
 
         .tableBox2 .row .scheduleTable tr .life {
-            background-color: yellowgreen;
+            background-color: pink;
+        }
+
+        .tableBox2 .row .scheduleTable tr .sport {
+            background-color: lightseagreen;
+        }
+
+        .tableBox2 .row .scheduleTable tr .business {
+            background-color: greenyellow;
         }
 
 
@@ -183,38 +191,11 @@
                 dayNameArr: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'],
                 year: new Date().getFullYear(),  //获取当前年份
                 month: new Date().getMonth() + 1,  //获取当前月份
-                domData: [
-                    [
-                        [{
-                            'title': '打球',
-                            'colspan': 3,
-                            'type': 'life'
-                        }, {}, {}, {}, {}],
-                        [{}, {}, {}, {}, {}, {}, {}],
-                        [{}, {}, {}, {}, {}, {}, {}]
-                    ],
-                    [
-                        [{}, {}, {}, {}, {
-                            'title': '开会',
-                            'colspan': 2,
-                            'type': 'life'
-                        }, {}],
-                        [{}, {}, {}, {}, {}, {}, {}],
-                        [{}, {}, {}, {}, {}, {}, {}]
-                    ],
-                    [
-                        [{}, {}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}, {}]
-                    ],
-                    [
-                        [{}, {}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}, {}]
-                    ],
-                    [
-                        [{}, {}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}, {}]
-                    ],
-                    [
-                        [{}, {}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}, {}]
-                    ],
-                ],
+                schedules: [
+                    {'title': '打球', type: 'sport', 'start': '20170625', 'end': '20170627'},
+                    {'title': '开会', type: 'business', 'start': '20170706', 'end': '20170707'},
+                    {'title': '玩游戏', type: 'life', 'start': '20170705', 'end': '20170706'},
+                ]
             }
         },
         methods: {
@@ -245,7 +226,7 @@
                         this.month = new Date().getMonth() + 1;
                     }
                 }, 800)
-            }
+            },
         },
         computed: {
             dayArr(){
@@ -255,12 +236,16 @@
                 //本月有多少天。算法：这个月的最后一天就是下个月的第一天-1ms,还需要考虑月份为12的时候年份+1
                 let y = this.month === 12 ? this.year + 1 : this.year; //下月所在的年份
                 let m = this.month === 12 ? 1 : this.month;  //如果是12月，下月就是1月
+                let _y = this.month === 1 ? this.year - 1 : this.year; //上月所在的年份
+                let _m = this.month === 1 ? 12 : this.month - 1;  //上月的月份
                 let theMonthDays = new Date(new Date(y, m, 1) - 1).getDate(); //日期对象-常数得到一个时间戳再newDate
                 let preMounthDays = new Date(new Date(this.year, this.month - 1, 1) - 1).getDate(); //上月最后一天日期
                 //这个月第一天是星期几就放入上个月几个尾巴（比如这个月第一天是星期四，就要显示上个月4天）周日不放
                 while (theMonthFirstDay-- > 0) {
                     dayArr.unshift({
                         'days': preMounthDays--,
+                        'month': _m,
+                        'year': _y,
                         'prevMonth': true
                     });
                 }
@@ -268,7 +253,9 @@
                 let count = 1; //本月1号
                 while (theMonthDays-- > 0) {
                     dayArr.push({
-                        'days': count++
+                        'days': count++,
+                        'month': this.month,
+                        'year': this.year,
                     });
                 }
                 //补足35（5排*7天）上月尾巴+本月+下月头 = 35 ,发现有bug，比如2017.7月要6排
@@ -277,6 +264,8 @@
                     while (dayArr.length !== 35) {
                         dayArr.push({
                             'days': count++,
+                            'month': m,
+                            'year': y,
                             'nextMonth': true
                         })
                     }
@@ -284,11 +273,23 @@
                     while (dayArr.length !== 42) {  //6排的情况
                         dayArr.push({
                             'days': count++,
+                            'month': m,
+                            'year': y,
                             'nextMonth': true
                         })
                     }
                 }
                 return dayArr
+            },
+            domData(){
+                //把结构写出来防止下标越界
+                let domData = this.dayArr.length === 35 ? [[[], [], []], [[], [], []], [[], [], []], [[], [], []], [[], [], []]] : [[[], [], []], [[], [], []], [[], [], []], [[], [], []], [[], [], []], [[], [], []]];
+                domData.map(function (row) {
+                    row.map(function (line) {
+                        return line.push()
+                    })
+                });
+                return domData;
             },
         }
     });
