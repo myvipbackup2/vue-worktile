@@ -162,7 +162,7 @@
             <tbody>
             <tr v-for="week in (Math.ceil(dayArr.length/7))">
                 <td v-for="item in theWeek(week)" :class="{'gray':item.prevMonth || item.nextMonth}">
-                    {{item.days}}
+                    {{item.day}}
                 </td>
             </tr>
             </tbody>
@@ -173,7 +173,7 @@
             <table class="scheduleTable">
                 <tr v-for="line in item">
                     <td v-for="td in line" :colspan="td.colspan">
-                        <div v-if="td.title" :class="{'schedule':td.type}">{{td.title}}</div>
+                        <div v-if="td.title" :class="['schedule',td.type]">{{td.title}}</div>
                     </td>
                 </tr>
             </table>
@@ -192,10 +192,10 @@
                 year: new Date().getFullYear(),  //获取当前年份
                 month: new Date().getMonth() + 1,  //获取当前月份
                 schedules: [
-                    {'title': '打球', type: 'sport', 'start': '20170625', 'end': '20170627'},
+                    {'title': '打球', type: 'sport', 'start': '20170625', 'end': '20170628'},
                     {'title': '开会', type: 'business', 'start': '20170706', 'end': '20170707'},
                     {'title': '玩游戏', type: 'life', 'start': '20170705', 'end': '20170706'},
-                ]
+                ],
             }
         },
         methods: {
@@ -243,7 +243,7 @@
                 //这个月第一天是星期几就放入上个月几个尾巴（比如这个月第一天是星期四，就要显示上个月4天）周日不放
                 while (theMonthFirstDay-- > 0) {
                     dayArr.unshift({
-                        'days': preMounthDays--,
+                        'day': preMounthDays--,
                         'month': _m,
                         'year': _y,
                         'prevMonth': true
@@ -253,7 +253,7 @@
                 let count = 1; //本月1号
                 while (theMonthDays-- > 0) {
                     dayArr.push({
-                        'days': count++,
+                        'day': count++,
                         'month': this.month,
                         'year': this.year,
                     });
@@ -263,7 +263,7 @@
                 if (dayArr.length <= 35) {
                     while (dayArr.length !== 35) {
                         dayArr.push({
-                            'days': count++,
+                            'day': count++,
                             'month': m,
                             'year': y,
                             'nextMonth': true
@@ -272,7 +272,7 @@
                 } else {
                     while (dayArr.length !== 42) {  //6排的情况
                         dayArr.push({
-                            'days': count++,
+                            'day': count++,
                             'month': m,
                             'year': y,
                             'nextMonth': true
@@ -284,22 +284,57 @@
             domData(){
                 //把结构写出来防止下标越界
                 let domData = this.dayArr.length === 35 ? [[[], [], []], [[], [], []], [[], [], []], [[], [], []], [[], [], []]] : [[[], [], []], [[], [], []], [[], [], []], [[], [], []], [[], [], []], [[], [], []]];
-                domData.map(function (row) {
-                    row.map(function (line) {
-                        return line.push()
-                    })
-                });
                 //放置默认td
-                domData.forEach(function (row, index1) {
-                    row.forEach(function (line, index2) {
+                //必须给个中间变量，直接调用this.dayArr会报错,因为在生命周期中dayArr没被创建之前就有值了
+                let dayArr = this.dayArr;
+                domData.forEach((row, index1) => {
+                    row.forEach(line => {
                         for (let i = 0; i < 7; i++) {
-                            let theDay = dayArr()
+                            let theDay = dayArr[index1 * 7 + i];
+                            line.push({
+                                'year': theDay.year,
+                                'month': theDay.month,
+                                'day': theDay.day,
+                                'baseLine': 0
+                            })
                         }
                     })
                 });
+                //把日程事务放入td
+                this.schedules.forEach(function (schedule, index) {
+                    let startYear = parseInt(schedule.start.substr(0, 4));  //开始年份
+                    let startMonth = parseInt(schedule.start.substr(4, 2));  //开始月份
+                    let startDay = parseInt(schedule.start.substr(6, 2));  //开始日期
+                    let endYear = parseInt(schedule.end.substr(0, 4));  //结束年份
+                    let endMonth = parseInt(schedule.end.substr(4, 2));  //结束月份
+                    let endDay = parseInt(schedule.end.substr(6, 2));  //结束日期
+
+                    //算日期的跨度,86400000代表一天有多少毫秒，+1代表把自己算上否则少一天
+                    let colspan = (new Date(endYear, endMonth, endDay) - new Date(startYear, startMonth, startDay)) / 86400000 + 1;
+
+                    //遍历domData
+                    domData.forEach((row) => {
+                        row.forEach((line, index) => {
+                            for (let i = 0; i < 7; i++) {
+                                //遍历到的td
+                                let td = line[i];
+                                //如果td的年月日和日程的时间相等，加上title
+                                if (td.year === startYear && td.month === startMonth && td.day === startDay && td.baseLine === index) {
+                                    td.title = schedule.title;
+                                    td.type = schedule.type;
+                                    td.colspan = colspan;
+                                    //不考虑跨周情况
+                                    for (let next = i; next < i + colspan; next++) {
+
+                                    }
+                                }
+                            }
+                        });
+                    });
+                });
                 return domData;
             },
-        }
+        },
     });
 
 </script>
